@@ -1,0 +1,2335 @@
+Modified files
+
+diff --git a/Documentation/devicetree/bindings/mfd/axp20x.txt b/Documentation/devicetree/bindings/mfd/axp20x.txt
+index 8f3ad9a..0e7835c 100644
+--- a/Documentation/devicetree/bindings/mfd/axp20x.txt
++++ b/Documentation/devicetree/bindings/mfd/axp20x.txt
+@@ -6,12 +6,14 @@ axp202 (X-Powers)
+ axp209 (X-Powers)
+ axp221 (X-Powers)
+ axp223 (X-Powers)
++axp803 (X-Powers)
+ axp809 (X-Powers)
++axp813 (X-Powers)
+ 
+ Required properties:
+ - compatible: "x-powers,axp152", "x-powers,axp202", "x-powers,axp209",
+-	      "x-powers,axp221", "x-powers,axp223", "x-powers,axp806",
+-	      "x-powers,axp809"
++	      "x-powers,axp221", "x-powers,axp223", "x-powers,axp803",
++	      "x-powers,axp806", "x-powers,axp809", "x-powers,axp813"
+ - reg: The I2C slave address or RSB hardware address for the AXP chip
+ - interrupt-parent: The parent interrupt controller
+ - interrupts: SoC NMI / GPIO interrupt connected to the PMIC's IRQ pin
+@@ -48,6 +50,7 @@ Optional properties for DCDC regulators:
+ 			  probably makes sense for HiFi audio related
+ 			  applications that aren't battery constrained.
+ 
++
+ AXP202/AXP209 regulators, type, and corresponding input supply names:
+ 
+ Regulator	  Type		  Supply Name		  Notes
+@@ -86,6 +89,35 @@ LDO_IO1		: LDO		: ips-supply		: GPIO 1
+ RTC_LDO		: LDO		: ips-supply		: always on
+ DRIVEVBUS	: Enable output	: drivevbus-supply	: external regulator
+ 
++AXP803/AXP813 regulators, type, and corresponding input supply names:
++
++Regulator	  Type		  Supply Name		  Notes
++---------	  ----		  -----------		  -----
++DCDC1		: DC-DC buck	: vin1-supply
++DCDC2		: DC-DC buck	: vin2-supply
++DCDC3		: DC-DC	buck	: vin3-supply
++DCDC4		: DC-DC	buck	: vin4-supply
++DCDC5		: DC-DC	buck	: vin5-supply
++DCDC6		: DC-DC	buck	: vin6-supply
++DCDC7		: DC-DC	buck	: vin7-supply	: (813 only)
++ALDO1		: LDO		: aldoin-supply	: shared supply
++ALDO2		: LDO		: aldoin-supply	: shared supply
++ALDO3		: LDO		: aldoin-supply	: shared supply
++DLDO1		: LDO		: dldoin-supply	: shared supply
++DLDO2		: LDO		: dldoin-supply	: shared supply
++DLDO3		: LDO		: dldoin-supply	: shared supply
++DLDO4		: LDO		: dldoin-supply	: shared supply
++ELDO1		: LDO		: eldoin-supply	: shared supply
++ELDO2		: LDO		: eldoin-supply	: shared supply
++ELDO3		: LDO		: eldoin-supply	: shared supply
++FLDO1		: LDO		: fldoin-supply	: shared supply
++FLDO2		: LDO		: fldoin-supply	: shared supply
++FLDO3		: LDO		: fldoin-supply	: shared supply (813 only)
++RTC_LDO		: LDO		: ips-supply	: always on
++LDO_IO0		: LDO		: ips-supply	: GPIO 0
++LDO_IO1		: LDO		: ips-supply	: GPIO 1
++DC1SW		: On/Off Switch	:		: DCDC1 secondary output (803 only)
++
+ AXP806 regulators, type, and corresponding input supply names:
+ 
+ Regulator	  Type		  Supply Name		  Notes
+diff --git a/Documentation/devicetree/bindings/sound/sun4i-i2s.txt b/Documentation/devicetree/bindings/sound/sun4i-i2s.txt
+index 7b526ec..bc668cb 100644
+--- a/Documentation/devicetree/bindings/sound/sun4i-i2s.txt
++++ b/Documentation/devicetree/bindings/sound/sun4i-i2s.txt
+@@ -1,4 +1,4 @@
+-* Allwinner A10 I2S controller
++* Allwinner A10/A38T/H3 I2S controller
+ 
+ The I2S bus (Inter-IC sound bus) is a serial link for digital
+ audio data transfer between devices in the system.
+@@ -6,19 +6,29 @@ audio data transfer between devices in the system.
+ Required properties:
+ 
+ - compatible: should be one of the followings
+-   - "allwinner,sun4i-a10-i2s"
++  - "allwinner,sun4i-a10-i2s"
++	"allwinner,sun8i-a83t-hdmi-audio"
++	"allwinner,sun8i-h3-hdmi-audio"
+ - reg: physical base address of the controller and length of memory mapped
+   region.
+-- interrupts: should contain the I2S interrupt.
+ - dmas: DMA specifiers for tx and rx dma. See the DMA client binding,
+ 	Documentation/devicetree/bindings/dma/dma.txt
+-- dma-names: should include "tx" and "rx".
++- dma-names: must include "tx" and/or "rx".
+ - clocks: a list of phandle + clock-specifer pairs, one for each entry in clock-names.
+ - clock-names: should contain followings:
+    - "apb" : clock for the I2S bus interface
+    - "mod" : module clock for the I2S controller
+ - #sound-dai-cells : Must be equal to 0
+ 
++Optional properties:
++
++- interrupts: I2S interrupt
++- resets: phandle to the reset of the device
++
++Required nodes:
++
++ - port: link to the associated CODEC (DAC, HDMI...)
++
+ Example:
+ 
+ i2s0: i2s@01c22400 {
+diff --git a/arch/arm/boot/dts/Makefile b/arch/arm/boot/dts/Makefile
+index befcd26..dffede5 100644
+--- a/arch/arm/boot/dts/Makefile
++++ b/arch/arm/boot/dts/Makefile
+@@ -817,6 +817,7 @@ dtb-$(CONFIG_MACH_SUN8I) += \
+ 	sun8i-a33-q8-tablet.dtb \
+ 	sun8i-a33-sinlinx-sina33.dtb \
+ 	sun8i-a83t-allwinner-h8homlet-v2.dtb \
++	sun8i-a83t-bananapi-m3.dtb \
+ 	sun8i-a83t-cubietruck-plus.dtb \
+ 	sun8i-h3-bananapi-m2-plus.dtb \
+ 	sun8i-h3-nanopi-neo.dtb \
+diff --git a/arch/arm/boot/dts/sun8i-a83t.dtsi b/arch/arm/boot/dts/sun8i-a83t.dtsi
+index d3473f8..d54133b 100644
+--- a/arch/arm/boot/dts/sun8i-a83t.dtsi
++++ b/arch/arm/boot/dts/sun8i-a83t.dtsi
+@@ -43,15 +43,18 @@
+ 
+  */
+ 
+-#include "skeleton.dtsi"
+-
++#include <dt-bindings/clock/sun8i-a83t.h>
+ #include <dt-bindings/interrupt-controller/arm-gic.h>
+-
+ #include <dt-bindings/pinctrl/sun4i-a10.h>
++#include <dt-bindings/reset/sun8i-a83t.h>
+ 
+ / {
+ 	interrupt-parent = <&gic>;
+ 
++	#address-cells = <1>;
++	#size-cells = <1>;
++	memory { device_type = "memory"; reg = <0 0>; };
++
+ 	cpus {
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+@@ -105,12 +108,23 @@
+ 		};
+ 	};
+ 
++	thermal-zones {
++		cpu_thermal: cpu_thermal {
++			polling-delay-passive = <1000>;
++			polling-delay = <5000>;
++			thermal-sensors = <&ths 0>;
++		};
++	};
++
+ 	timer {
+ 		compatible = "arm,armv7-timer";
+ 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
+ 			     <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
+ 			     <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>,
+ 			     <GIC_PPI 10 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_LOW)>;
++// needed
++		clock-frequency = <24000000>;
++		arm,cpu-registers-not-fw-configured;
+ 	};
+ 
+ 	clocks {
+@@ -138,13 +152,13 @@
+ 			clock-output-names = "osc16M";
+ 		};
+ 
+-		osc16Md512: osc16Md512_clk {
++		osc32k: osc32k_clk {
+ 			#clock-cells = <0>;
+ 			compatible = "fixed-factor-clock";
+ 			clock-div = <512>;
+ 			clock-mult = <1>;
+ 			clocks = <&osc16M>;
+-			clock-output-names = "osc16M-d512";
++			clock-output-names = "osc32k";
+ 		};
+ 	};
+ 
+@@ -154,18 +168,218 @@
+ 		#size-cells = <1>;
+ 		ranges;
+ 
++		de: de-controller@01000000 {
++			compatible = "allwinner,sun8i-a83t-display-engine";
++			reg = <0x01000000 0x400000>;
++			clocks = <&ccu CLK_PLL_DE>;
++			clock-names = "clock";
++			ports = <&lcd1_p>;
++			status = "disabled";
++		};
++
++// needed for uart0
++		dma: dma-controller@01c02000 {
++			compatible = "allwinner,sun8i-a83t-dma";
++			reg = <0x01c02000 0x1000>;
++			interrupts = <GIC_SPI 50 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_BUS_DMA>;
++			resets = <&ccu RST_DMA>;
++			#dma-cells = <1>;
++		};
++
++		lcd1: lcd-controller@01c0d000 {
++			compatible = "allwinner,sun8i-a83t-lcd";
++			reg = <0x01c0d000 0x400>;
++			clocks = <&ccu CLK_TCON1>;
++			clock-names = "clock";
++			interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
++			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			lcd1_p: port {
++				lcd1_hdmi: endpoint {
++					remote-endpoint = <&hdmi_lcd1>;
++				};
++			};
++		};
++
++		mmc0: mmc@01c0f000 {
++			compatible = "allwinner,sun7i-a20-mmc";
++			reg = <0x01c0f000 0x1000>;
++			clocks = <&ccu CLK_BUS_MMC0>,
++				 <&ccu CLK_MMC0>,
++				 <&ccu CLK_MMC0_OUTPUT>,
++				 <&ccu CLK_MMC0_SAMPLE>;
++			clock-names = "ahb",
++				      "mmc",
++				      "output",
++				      "sample";
++			interrupts = <GIC_SPI 60 IRQ_TYPE_LEVEL_HIGH>;
++			status = "disabled";
++		};
++
++		mmc1: mmc@01c10000 {
++			compatible = "allwinner,sun7i-a20-mmc";
++			reg = <0x01c10000 0x1000>;
++			clocks = <&ccu CLK_BUS_MMC1>,
++				 <&ccu CLK_MMC1>,
++				 <&ccu CLK_MMC1_OUTPUT>,
++				 <&ccu CLK_MMC1_SAMPLE>;
++			clock-names = "ahb",
++				      "mmc",
++				      "output",
++				      "sample";
++			interrupts = <GIC_SPI 61 IRQ_TYPE_LEVEL_HIGH>;
++			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++		};
++
++		mmc2: mmc@01c11000 {
++			compatible = "allwinner,sun7i-a20-mmc";
++			reg = <0x01c11000 0x1000>;
++			clocks = <&ccu CLK_BUS_MMC2>,
++				 <&ccu CLK_MMC2>,
++				 <&ccu CLK_MMC2_OUTPUT>,
++				 <&ccu CLK_MMC2_SAMPLE>;
++			clock-names = "ahb",
++				      "mmc",
++				      "output",
++				      "sample";
++			interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
++			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++		};
++
++#if 0 //not needed
++		sid: eeprom@01c14000 {
++			compatible = "allwinner,sun4i-a10-sid";
++			reg = <0x01c14000 0x400>;
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++//useless if not android ?
++//			ths_calibration: calib@234 {
++//				reg = <0x234 0x8>;
++//			};
++		};
++#endif
++
++// usb from wens
++		usb_otg: usb@01c19000 {
++			compatible = "allwinner,sun8i-a33-musb";
++			reg = <0x01c19000 0x0400>;
++			clocks = <&ccu CLK_BUS_USBDRD>;
++			resets = <&ccu RST_USBDRD>;
++			interrupts = <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>;
++			interrupt-names = "mc";
++			phys = <&usbphy 0>;
++			phy-names = "usb";
++			extcon = <&usbphy 0>;
++			status = "disabled";
++		};
++
++		usbphy: phy@01c19400 {
++			compatible = "allwinner,sun8i-a83t-usb-phy";
++			reg = <0x01c19400 0x10>,
++			      <0x01c1a800 0x4>,
++			      <0x01c1b800 0x4>;
++			reg-names = "phy_ctrl",
++				    "pmu1",
++				    "pmu2";
++			clocks = <&ccu CLK_USB_PHY0>,
++				 <&ccu CLK_USB_PHY1>,
++				 <&ccu CLK_USB_HSIC>;
++			clock-names = "usb0_phy",
++				      "usb1_phy",
++				      "usb2_phy";
++			resets = <&ccu RST_USB_PHY0>,
++				 <&ccu RST_USB_PHY1>,
++				 <&ccu RST_USB_HSIC>;
++			reset-names = "usb0_reset",
++				      "usb1_reset",
++				      "usb2_reset";
++			status = "disabled";
++			#phy-cells = <1>;
++		};
++
++		ehci0: usb@01c1a000 {
++			compatible = "allwinner,sun8i-a83t-ehci", "generic-ehci";
++			reg = <0x01c1a000 0x100>;
++			interrupts = <GIC_SPI 72 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_BUS_EHCI0>;
++			resets = <&ccu RST_EHCI0>;
++			phys = <&usbphy 1>;
++			phy-names = "usb";
++			status = "disabled";
++		};
++
++		ohci0: usb@01c1a400 {
++			compatible = "allwinner,sun8i-a83t-ohci", "generic-ohci";
++			reg = <0x01c1a400 0x100>;
++			interrupts = <GIC_SPI 73 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_BUS_OHCI0>, <&ccu CLK_OHCI0>;
++			resets = <&ccu RST_OHCI0>;
++			phys = <&usbphy 1>;
++			phy-names = "usb";
++			status = "disabled";
++		};
++
++		ehci1: usb@01c1b000 {
++			compatible = "allwinner,sun8i-a83t-ehci", "generic-ehci";
++			reg = <0x01c1b000 0x100>;
++			interrupts = <GIC_SPI 74 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_BUS_EHCI1>, <&ccu CLK_OSC12M>;
++			resets = <&ccu RST_EHCI1>;
++			phys = <&usbphy 2>;
++			phy-names = "usb";
++			status = "disabled";
++		};
++
++		ccu: clock@01c20000 {
++			compatible = "allwinner,sun8i-a83t-ccu";
++			reg =	<0x01c20000 0x400>,	/* CCU */
++				<0x01f01400 0xc0>;	/* PRCM */
++			#clock-cells = <1>;
++			#reset-cells = <1>;
++			assigned-clocks = <&ccu CLK_PLL_PERIPH>,
++					<&ccu CLK_PLL_DE>,
++//					<&ccu CLK_PLL_VE>,
++//					<&ccu CLK_PLL_GPU>,
++//					<&ccu CLK_PLL_HSIC>,
++					<&ccu CLK_PLL_VIDEO1>;
++			assigned-clock-rates =
++//test 1.2GHz
++//					<1200000000>,	// pll-periph
++//test 600MHz + change mmc compatible
++					<600000000>,	// pll-periph
++					<504000000>,	// pll-de
++//					<432000000>,	// pll-ve
++//					<432000000>,	// pll-gpu
++//					<480000000>,	// pll-hsic
++					<297000000>;	// pll-video1
++		};
++
+ 		pio: pinctrl@01c20800 {
+ 			compatible = "allwinner,sun8i-a83t-pinctrl";
+ 			interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>,
+ 				     <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>,
+ 				     <GIC_SPI 100 IRQ_TYPE_LEVEL_HIGH>;
+ 			reg = <0x01c20800 0x400>;
+-			clocks = <&osc24M>;
++			clocks = <&ccu CLK_BUS_PIO>;
+ 			gpio-controller;
+ 			interrupt-controller;
+ 			#interrupt-cells = <3>;
+ 			#gpio-cells = <3>;
+ 
++			hdmi_pins_a: hdmi@0 {
++				allwinner,pins = "PH6", "PH7", "PH8";
++				allwinner,function = "hdmi";
++				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
++				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
++			};
++
+ 			mmc0_pins_a: mmc0@0 {
+ 				allwinner,pins = "PF0", "PF1", "PF2",
+ 						 "PF3", "PF4", "PF5";
+@@ -174,6 +388,31 @@
+ 				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
+ 			};
+ 
++			mmc0_cd_pin: mmc0_cd_pin@0 {
++				allwinner,pins = "PF6";
++				allwinner,function = "gpio_in";
++				allwinner,drive = <SUN4I_PINCTRL_10_MA>;
++				allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
++			};
++
++			mmc1_pins_a: mmc1@0 {
++				allwinner,pins = "PG0", "PG1", "PG2", "PG3",
++						 "PG4", "PG5";
++				allwinner,function = "mmc1";
++				allwinner,drive = <SUN4I_PINCTRL_30_MA>;
++				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
++			};
++
++			mmc2_8bit_pins: mmc2_8bit {
++				allwinner,pins = "PC5", "PC6", "PC8",
++						 "PC9", "PC10", "PC11",
++						 "PC12", "PC13", "PC14",
++						 "PC15", "PC16";
++				allwinner,function = "mmc2";
++				allwinner,drive = <SUN4I_PINCTRL_40_MA>;
++				allwinner,pull = <SUN4I_PINCTRL_NO_PULL>;
++			};
++
+ 			uart0_pins_a: uart0@0 {
+ 				allwinner,pins = "PF2", "PF4";
+ 				allwinner,function = "uart0";
+@@ -201,7 +440,24 @@
+ 			compatible = "allwinner,sun6i-a31-wdt";
+ 			reg = <0x01c20ca0 0x20>;
+ 			interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
+-			clocks = <&osc24M>;
++//fixme: no clock in A83T
++//			clocks = <&osc24M>;
++		};
++
++		i2s2: i2s@1c22800 {
++			compatible = "allwinner,sun8i-a83t-i2s";
++			reg = <0x01c22800 0x60>;
++			clocks = <&ccu CLK_I2S2>;
++			clock-names = "mod";
++			resets = <&ccu RST_I2S2>;
++			dmas = <&dma 27>;
++			dma-names = "tx";
++			status = "disabled";
++			port {
++				i2s2_hdmi: endpoint {
++					remote-endpoint = <&hdmi_i2s2>;
++				};
++			};
+ 		};
+ 
+ 		uart0: serial@01c28000 {
+@@ -210,9 +466,17 @@
+ 			interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>;
+ 			reg-shift = <2>;
+ 			reg-io-width = <4>;
++#if 1 // if pb with ccu
+ 			clocks = <&osc24M>;
++#else
++			clocks = <&ccu CLK_BUS_UART0>;
++			resets = <&ccu RST_UART0>;
++			dmas = <&dma 6>, <&dma 6>;
++			dma-names = "rx", "tx";
++#endif
+ 			status = "disabled";
+ 		};
++//fixme: more uart 1..4
+ 
+ 		gic: interrupt-controller@01c81000 {
+ 			compatible = "arm,cortex-a7-gic", "arm,cortex-a15-gic";
+@@ -224,5 +488,82 @@
+ 			#interrupt-cells = <3>;
+ 			interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(8) | IRQ_TYPE_LEVEL_HIGH)>;
+ 		};
++
++		hdmi: hdmi@01ee0000 {
++			compatible = "allwinner,sun8i-a83t-hdmi";
++			reg = <0x01ee0000 0x20000>;
++			clocks = <&ccu CLK_HDMI>, <&ccu CLK_HDMI_DDC>;
++			clock-names = "clock", "ddc-clock";
++			resets = <&ccu RST_HDMI0>, <&ccu RST_HDMI1>;
++			reset-names = "hdmi0", "hdmi1";
++			pinctrl-names = "default";
++			pinctrl-0 = <&hdmi_pins_a>;
++			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			port@0 {
++				reg = <0>;
++				hdmi_lcd1: endpoint {
++					remote-endpoint = <&lcd1_hdmi>;
++				};
++			};
++			port@1 {
++				reg = <1>;
++				hdmi_i2s2: endpoint {
++					remote-endpoint = <&i2s2_hdmi>;
++				};
++			};
++		};
++
++		nmi_intc: interrupt-controller@01f00c0c {
++			compatible = "allwinner,sun6i-a31-sc-nmi";
++			interrupt-controller;
++			#interrupt-cells = <2>;
++			reg = <0x01f00c0c 0x38>;
++			interrupts = <GIC_SPI 32 IRQ_TYPE_LEVEL_HIGH>;
++		};
++
++		r_pio: pinctrl@01f02c00 {
++			compatible = "allwinner,sun8i-a83t-r-pinctrl";
++			reg = <0x01f02c00 0x400>;
++			interrupts = <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_BUS_R_PIO>;
++			gpio-controller;
++			interrupt-controller;
++			#interrupt-cells = <3>;
++			#gpio-cells = <3>;
++
++			r_rsb_pins: r_rsb {
++				allwinner,pins = "PL0", "PL1";
++				allwinner,function = "s_rsb";
++				allwinner,drive = <SUN4I_PINCTRL_30_MA>;
++				allwinner,pull = <SUN4I_PINCTRL_PULL_UP>;
++			};
++		};
++
++		r_rsb: i2c@01f03400 {
++			compatible = "allwinner,sun8i-a23-rsb";
++			reg = <0x01f03400 0x400>;
++			interrupts = <GIC_SPI 39 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_BUS_R_RSB>;
++			clock-frequency = <3000000>;
++			resets = <&ccu RST_R_RSB>;
++			pinctrl-names = "default";
++			pinctrl-0 = <&r_rsb_pins>;
++			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++		};
++
++		ths: ths@01f04000 {
++			#thermal-sensor-cells = <0>;
++			compatible = "allwinner,sun8i-a83t-ths";
++			reg = <0x01f04000 0x8c>;
++//fixme: irq 31 in H3 - irq removed for a83t in drivers/thermal/sun8i_ths.c
++//			interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
++//useless if not android ?
++//			nvmem-cells = <&ths_calibration>;
++//			nvmem-cell-names = "calibration";
++		};
+ 	};
+ };
+diff --git a/arch/arm/boot/dts/sun8i-h3-bananapi-m2-plus.dts b/arch/arm/boot/dts/sun8i-h3-bananapi-m2-plus.dts
+index 06fddaa..87ff865 100644
+--- a/arch/arm/boot/dts/sun8i-h3-bananapi-m2-plus.dts
++++ b/arch/arm/boot/dts/sun8i-h3-bananapi-m2-plus.dts
+@@ -55,6 +55,10 @@
+ 	aliases {
+ 		serial0 = &uart0;
+ 		serial1 = &uart1;
++		lcd0 = &lcd0;
++		mmc0 = &mmc0;
++		mmc1 = &mmc1;
++		mmc2 = &mmc2;
+ 	};
+ 
+ 	chosen {
+@@ -93,6 +97,24 @@
+ 	};
+ };
+ 
++&ccu {
++	/* force some rates and parents */
++	assigned-clocks = <&ccu CLK_PLL_PERIPH0>,
++//test cpu@1008MHz - ko
++//			  <&ccu CLK_PLL_CPUX>,
++			  <&ccu CLK_PLL_PERIPH1>;
++//			  <&ccu CLK_PLL_DE>;
++	assigned-clock-rates = <600000000>,
++//test cpu@1008MHz
++//				<1008000000>,
++				<600000000>;
++//				<864000000>;
++};
++
++&de {
++	status = "okay";
++};
++
+ &ehci1 {
+ 	status = "okay";
+ };
+@@ -101,12 +123,24 @@
+ 	status = "okay";
+ };
+ 
++&hdmi {
++	status = "okay";
++};
++
++&i2s2 {
++	status = "okay";
++};
++
+ &ir {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&ir_pins_a>;
+ 	status = "okay";
+ };
+ 
++&lcd0 {
++	status = "okay";
++};
++
+ &mmc0 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&mmc0_pins_a>, <&mmc0_cd_pin>;
+diff --git a/arch/arm/boot/dts/sun8i-h3-orangepi-2.dts b/arch/arm/boot/dts/sun8i-h3-orangepi-2.dts
+index e5bcaba..2514eaa 100644
+--- a/arch/arm/boot/dts/sun8i-h3-orangepi-2.dts
++++ b/arch/arm/boot/dts/sun8i-h3-orangepi-2.dts
+@@ -53,6 +53,8 @@
+ 	compatible = "xunlong,orangepi-2", "allwinner,sun8i-h3";
+ 
+ 	aliases {
++		ethernet0 = &emac;
++		lcd0 = &lcd0;
+ 		serial0 = &uart0;
+ 		/* ethernet0 is the H3 emac, defined in sun8i-h3.dtsi */
+ 		ethernet1 = &rtl8189;
+@@ -101,20 +103,63 @@
+ 		compatible = "mmc-pwrseq-simple";
+ 		pinctrl-names = "default";
+ 		pinctrl-0 = <&wifi_pwrseq_pin_orangepi>;
+-		reset-gpios = <&r_pio 0 7 GPIO_ACTIVE_LOW>; /* PL7 WIFI_EN */
++// crash
++//		reset-gpios = <&r_pio 0 7 GPIO_ACTIVE_LOW>; /* PL7 WIFI_EN */
+ 	};
+ };
+ 
++//&ccu {
++//	/* force some rates */
++//	assigned-clocks = <&ccu CLK_PLL_PERIPH0>,
++//			  <&ccu CLK_PLL_PERIPH1>,
++//			  <&ccu CLK_PLL_DE>,
++//			  <&ccu CLK_DE>;
++//	assigned-clock-rates = <600000000>,
++//				<600000000>,
++//				<864000000>,
++//				<432000000>;
++//};
++
++&de {
++	status = "okay";
++};
++
+ &ehci1 {
+ 	status = "okay";
+ };
+ 
++&emac {
++	phy = <&phy1>;
++	phy-mode = "mii";
++	allwinner,leds-active-low;
++	status = "okay";
++	phy1: ethernet-phy@1 {
++		reg = <1>;
++	};
++};
++
++&hdmi {
++	status = "okay";
++};
++
++&i2s2 {
++	status = "okay";
++};
++
+ &ir {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&ir_pins_a>;
+ 	status = "okay";
+ };
+ 
++&lcd0 {
++	status = "okay";
++};
++
++//&lcd1 {
++//	status = "okay";
++//};
++
+ &mmc0 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&mmc0_pins_a>, <&mmc0_cd_pin>;
+@@ -180,6 +225,18 @@
+ 	status = "okay";
+ };
+ 
++&reg_vcc3v0 {
++	status = "disabled";
++};
++
++&reg_vcc5v0 {
++	status = "disabled";
++};
++
++//&tve {
++//	status = "okay";
++//};
++
+ &uart0 {
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&uart0_pins_a>;
+diff --git a/arch/arm/boot/dts/sun8i-h3-orangepi-pc-plus.dts b/arch/arm/boot/dts/sun8i-h3-orangepi-pc-plus.dts
+index 851fd2c..89aaaff 100644
+--- a/arch/arm/boot/dts/sun8i-h3-orangepi-pc-plus.dts
++++ b/arch/arm/boot/dts/sun8i-h3-orangepi-pc-plus.dts
+@@ -40,8 +40,8 @@
+  *     OTHER DEALINGS IN THE SOFTWARE.
+  */
+ 
+-/* The Orange Pi PC Plus is an extended version of the regular PC */
+-#include "sun8i-h3-orangepi-pc.dts"
++/* The Orange Pi PC Plus is an extended version of the Orange PI 2 */
++#include "sun8i-h3-orangepi-2.dts"
+ 
+ / {
+ 	model = "Xunlong Orange Pi PC Plus";
+@@ -50,17 +50,19 @@
+ 	aliases {
+ 		/* ethernet0 is the H3 emac, defined in sun8i-h3.dtsi */
+ 		ethernet1 = &rtl8189ftv;
++		mmc2 = &mmc2;
+ 	};
+ };
+ 
+-&mmc1 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&mmc1_pins_a>;
+-	vmmc-supply = <&reg_vcc3v3>;
+-	bus-width = <4>;
+-	non-removable;
++&ehci2 {
+ 	status = "okay";
++};
+ 
++&ehci3 {
++	status = "okay";
++};
++
++&mmc1 {
+ 	/*
+ 	 * Explicitly define the sdio device, so that we can add an ethernet
+ 	 * alias for it (which e.g. makes u-boot set a mac-address).
+diff --git a/arch/arm/boot/dts/sun8i-h3.dtsi b/arch/arm/boot/dts/sun8i-h3.dtsi
+index 75a8654..f7e407b 100644
+--- a/arch/arm/boot/dts/sun8i-h3.dtsi
++++ b/arch/arm/boot/dts/sun8i-h3.dtsi
+@@ -40,42 +40,70 @@
+  *     OTHER DEALINGS IN THE SOFTWARE.
+  */
+ 
+-#include "skeleton.dtsi"
+-
+-#include <dt-bindings/clock/sun8i-h3-ccu.h>
++#include <dt-bindings/clock/sun8i-h3.h>
+ #include <dt-bindings/interrupt-controller/arm-gic.h>
+ #include <dt-bindings/pinctrl/sun4i-a10.h>
+-#include <dt-bindings/reset/sun8i-h3-ccu.h>
++#include <dt-bindings/reset/sun8i-h3.h>
+ 
+ / {
+ 	interrupt-parent = <&gic>;
+ 
++	#address-cells = <1>;
++	#size-cells = <1>;
++	memory { device_type = "memory"; reg = <0 0>; };
++
+ 	cpus {
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+ 
++		enable-method = "allwinner,sun6i-a31";
++
+ 		cpu@0 {
+ 			compatible = "arm,cortex-a7";
+ 			device_type = "cpu";
+ 			reg = <0>;
++//psci
++//			enable-method = "psci";
++//			clocks = <&ccu CLK_PLL_CPUX>;
++//			clock-latency = <??>;
+ 		};
+ 
+ 		cpu@1 {
+ 			compatible = "arm,cortex-a7";
+ 			device_type = "cpu";
+ 			reg = <1>;
++//psci
++//			enable-method = "psci";
+ 		};
+ 
+ 		cpu@2 {
+ 			compatible = "arm,cortex-a7";
+ 			device_type = "cpu";
+ 			reg = <2>;
++//psci
++//			enable-method = "psci";
+ 		};
+ 
+ 		cpu@3 {
+ 			compatible = "arm,cortex-a7";
+ 			device_type = "cpu";
+ 			reg = <3>;
++//psci
++//			enable-method = "psci";
++		};
++	};
++
++//psci
++//	psci {
++//		compatible = "arm,psci-0.2";
++//		method = "smc";
++//	};
++
++	thermal-zones {
++		cpu_thermal: cpu_thermal {
++			polling-delay-passive = <1000>;
++			polling-delay = <5000>;
++			thermal-sensors = <&ths 0>;
+ 		};
+ 	};
+ 
+@@ -85,6 +113,9 @@
+ 			     <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+ 			     <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
+ 			     <GIC_PPI 10 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>;
++// from hdg and jens - needed in all cases
++		clock-frequency = <24000000>;
++		arm,cpu-registers-not-fw-configured;
+ 	};
+ 
+ 	clocks {
+@@ -105,33 +136,6 @@
+ 			clock-frequency = <32768>;
+ 			clock-output-names = "osc32k";
+ 		};
+-
+-		apb0: apb0_clk {
+-			compatible = "fixed-factor-clock";
+-			#clock-cells = <0>;
+-			clock-div = <1>;
+-			clock-mult = <1>;
+-			clocks = <&osc24M>;
+-			clock-output-names = "apb0";
+-		};
+-
+-		apb0_gates: clk@01f01428 {
+-			compatible = "allwinner,sun8i-h3-apb0-gates-clk",
+-				     "allwinner,sun4i-a10-gates-clk";
+-			reg = <0x01f01428 0x4>;
+-			#clock-cells = <1>;
+-			clocks = <&apb0>;
+-			clock-indices = <0>, <1>;
+-			clock-output-names = "apb0_pio", "apb0_ir";
+-		};
+-
+-		ir_clk: ir_clk@01f01454 {
+-			compatible = "allwinner,sun4i-a10-mod0-clk";
+-			reg = <0x01f01454 0x4>;
+-			#clock-cells = <0>;
+-			clocks = <&osc32k>, <&osc24M>;
+-			clock-output-names = "ir";
+-		};
+ 	};
+ 
+ 	soc {
+@@ -140,15 +144,70 @@
+ 		#size-cells = <1>;
+ 		ranges;
+ 
++		de: de-controller@01000000 {
++			compatible = "allwinner,sun8i-h3-display-engine";
++			reg = <0x01000000 0x400000>;
++			clocks = <&ccu CLK_DE>;
++			clock-names = "clock";
++//			resets = <&ccu RST_BUS_DE>;
++//fixme: tv to be added
++//			ports = <&lcd0_p>, <&lcd1_p>;
++			ports = <&lcd0_p>;
++			status = "disabled";
++		};
++
++		syscon: syscon@01c00000 {
++//fixme: which compatible
++			compatible = "syscon";
++//fixme: size 0x1000 ?
++			reg = <0x01c00000 0x34>;
++		};
++
+ 		dma: dma-controller@01c02000 {
+ 			compatible = "allwinner,sun8i-h3-dma";
+ 			reg = <0x01c02000 0x1000>;
+ 			interrupts = <GIC_SPI 50 IRQ_TYPE_LEVEL_HIGH>;
++#if 0 // needed if no uart0
++			clocks = <&osc24M>;
++#else
+ 			clocks = <&ccu CLK_BUS_DMA>;
+ 			resets = <&ccu RST_BUS_DMA>;
++#endif
+ 			#dma-cells = <1>;
+ 		};
+ 
++		lcd0: lcd-controller@01c0c000 {
++			compatible = "allwinner,sun8i-a83t-lcd";
++			reg = <0x01c0c000 0x400>;
++			clocks = <&ccu CLK_TCON0>;
++			clock-names = "clock";
++			interrupts = <GIC_SPI 86 IRQ_TYPE_LEVEL_HIGH>;
++			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			lcd0_p: port {
++				lcd0_hdmi: endpoint {
++					remote-endpoint = <&hdmi_lcd0>;
++				};
++			};
++		};
++
++//		lcd1: lcd-controller@01c0d000 {
++//			compatible = "allwinner,sun8i-h3-lcd";
++//			reg = <0x01c0d000 0x400>;
++//			clocks = <&ccu CLK_BUS_TCON1>, <&ccu ???>;
++//			clock-names = "gate", "clock";
++//			interrupts = <GIC_SPI 87 IRQ_TYPE_LEVEL_HIGH>;
++//			status = "disabled";
++//			#address-cells = <1>;
++//			#size-cells = <0>;
++//			lcd1_p: port {
++//				lcd1_tve: endpoint {
++//					remote-endpoint = <&tve_lcd1>;
++//				};
++//			};
++//		};
++
+ 		mmc0: mmc@01c0f000 {
+ 			compatible = "allwinner,sun7i-a20-mmc";
+ 			reg = <0x01c0f000 0x1000>;
+@@ -160,8 +219,8 @@
+ 				      "mmc",
+ 				      "output",
+ 				      "sample";
+-			resets = <&ccu RST_BUS_MMC0>;
+-			reset-names = "ahb";
++//			resets = <&ccu RST_BUS_MMC0>;
++//			reset-names = "ahb";
+ 			interrupts = <GIC_SPI 60 IRQ_TYPE_LEVEL_HIGH>;
+ 			status = "disabled";
+ 			#address-cells = <1>;
+@@ -179,8 +238,8 @@
+ 				      "mmc",
+ 				      "output",
+ 				      "sample";
+-			resets = <&ccu RST_BUS_MMC1>;
+-			reset-names = "ahb";
++//			resets = <&ccu RST_BUS_MMC1>;
++//			reset-names = "ahb";
+ 			interrupts = <GIC_SPI 61 IRQ_TYPE_LEVEL_HIGH>;
+ 			status = "disabled";
+ 			#address-cells = <1>;
+@@ -198,14 +257,28 @@
+ 				      "mmc",
+ 				      "output",
+ 				      "sample";
+-			resets = <&ccu RST_BUS_MMC2>;
+-			reset-names = "ahb";
++//			resets = <&ccu RST_BUS_MMC2>;
++//			reset-names = "ahb";
+ 			interrupts = <GIC_SPI 62 IRQ_TYPE_LEVEL_HIGH>;
+ 			status = "disabled";
+ 			#address-cells = <1>;
+ 			#size-cells = <0>;
+ 		};
+ 
++#if 0 // useless
++		sid: eeprom@01c14000 {
++			compatible = "allwinner,sun4i-a10-sid";
++			reg = <0x01c14000 0x400>;
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++//useless if not android
++//			ths_calibration: calib@234 {
++//				reg = <0x234 0x4>;
++//			};
++		};
++#endif
++
+ 		usbphy: phy@01c19400 {
+ 			compatible = "allwinner,sun8i-h3-usb-phy";
+ 			reg = <0x01c19400 0x2c>,
+@@ -309,11 +382,21 @@
+ 
+ 		ccu: clock@01c20000 {
+ 			compatible = "allwinner,sun8i-h3-ccu";
+-			reg = <0x01c20000 0x400>;
++			reg =	<0x01c20000 0x400>,	/* CCU */
++				<0x01f01400 0xc0>;	/* PRCM */
+ 			clocks = <&osc24M>, <&osc32k>;
+ 			clock-names = "hosc", "losc";
+ 			#clock-cells = <1>;
+ 			#reset-cells = <1>;
++
++			assigned-clocks = <&ccu CLK_PLL_PERIPH0>,
++					  <&ccu CLK_PLL_PERIPH1>,
++//					  <&ccu CLK_PLL_DE>,
++					  <&ccu CLK_DE>;
++			assigned-clock-rates =  <600000000>,
++						<600000000>,
++//						<864000000>,
++						<432000000>;
+ 		};
+ 
+ 		pio: pinctrl@01c20800 {
+@@ -321,7 +404,11 @@
+ 			reg = <0x01c20800 0x400>;
+ 			interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH>,
+ 				     <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
++#if 1 // needed if no uart0
++			clocks = <&osc24M>;
++#else
+ 			clocks = <&ccu CLK_BUS_PIO>;
++#endif
+ 			gpio-controller;
+ 			#gpio-cells = <3>;
+ 			interrupt-controller;
+@@ -439,16 +526,48 @@
+ 			status = "disabled";
+ 		};
+ 
++		i2s2: i2s@1c22800 {
++			compatible = "allwinner,sun8i-h3-i2s";
++			reg = <0x01c22800 0x60>;
++			clocks = <&ccu CLK_I2S2>;
++			clock-names = "mod";
++			resets = <&ccu RST_BUS_I2S2>;
++			dmas = <&dma 27>;
++			dma-names = "tx";
++			status = "disabled";
++			port {
++				i2s2_hdmi: endpoint {
++					remote-endpoint = <&hdmi_i2s2>;
++				};
++			};
++		};
++
++		ths: ths@01c25000 {
++			#thermal-sensor-cells = <0>;
++			compatible = "allwinner,sun8i-h3-ths";
++			reg = <0x01c25000 0x88>;
++			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
++			clocks = <&ccu CLK_THS>;
++			resets = <&ccu RST_BUS_THS>;
++//useless if not android
++//			nvmem-cells = <&ths_calibration>;
++//			nvmem-cell-names = "calibration";
++		};
++
+ 		uart0: serial@01c28000 {
+ 			compatible = "snps,dw-apb-uart";
+ 			reg = <0x01c28000 0x400>;
+ 			interrupts = <GIC_SPI 0 IRQ_TYPE_LEVEL_HIGH>;
+ 			reg-shift = <2>;
+ 			reg-io-width = <4>;
++#if 1 // needed if no uart0
++			clocks = <&osc24M>;
++#else
+ 			clocks = <&ccu CLK_BUS_UART0>;
+ 			resets = <&ccu RST_BUS_UART0>;
+ 			dmas = <&dma 6>, <&dma 6>;
+ 			dma-names = "rx", "tx";
++#endif
+ 			status = "disabled";
+ 		};
+ 
+@@ -530,6 +649,20 @@
+ 			#size-cells = <0>;
+ 		};
+ 
++		emac: ethernet@1c30000 {
++			compatible = "allwinner,sun8i-h3-emac";
++			syscon = <&syscon>;
++			reg = <0x01c30000 0x104>;
++			interrupts = <GIC_SPI 82 IRQ_TYPE_LEVEL_HIGH>;
++			resets = <&ccu RST_BUS_EMAC>, <&ccu RST_BUS_EPHY>;
++			reset-names = "ahb", "ephy";
++			clocks = <&ccu CLK_BUS_EMAC>, <&ccu CLK_BUS_EPHY>;
++			clock-names = "ahb", "ephy";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			status = "disabled";
++		};
++
+ 		gic: interrupt-controller@01c81000 {
+ 			compatible = "arm,cortex-a7-gic", "arm,cortex-a15-gic";
+ 			reg = <0x01c81000 0x1000>,
+@@ -541,6 +674,46 @@
+ 			interrupts = <GIC_PPI 9 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_HIGH)>;
+ 		};
+ 
++//		tve {
++//			compatible = "allwinner,sun8i-h3-tve";
++//			reg = <0x01e00000 0x10000>;
++//			clocks = <&ccu CLK_BUS_TVE>, <&ccu CLK_TVE>;
++//			clock-names = "gate", "clock";
++//			resets = <&ccu RST_BUS_TVE>;
++//			status = "disabled";
++//			#address-cells = <1>;
++//			#size-cells = <0>;
++//			port {
++//				tve_lcd1: endpoint {
++//					remote-endpoint = <&lcd1_tve>;
++//				};
++//			};
++//		};
++
++		hdmi: hdmi@01ee0000 {
++			compatible = "allwinner,sun8i-h3-hdmi";
++			reg = <0x01ee0000 0x20000>;
++			clocks = <&ccu CLK_HDMI>, <&ccu CLK_HDMI_DDC>;
++			clock-names = "clock", "ddc-clock";
++			resets = <&ccu RST_BUS_HDMI0>, <&ccu RST_BUS_HDMI1>;
++			reset-names = "hdmi0", "hdmi1";
++			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			port@0 {
++				reg = <0>;
++				hdmi_lcd0: endpoint {
++					remote-endpoint = <&lcd0_hdmi>;
++				};
++			};
++			port@1 {
++				reg = <1>;
++				hdmi_i2s2: endpoint {
++					remote-endpoint = <&i2s2_hdmi>;
++				};
++			};
++		};
++
+ 		rtc: rtc@01f00000 {
+ 			compatible = "allwinner,sun6i-a31-rtc";
+ 			reg = <0x01f00000 0x54>;
+@@ -548,17 +721,21 @@
+ 				     <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
+ 		};
+ 
+-		apb0_reset: reset@01f014b0 {
+-			reg = <0x01f014b0 0x4>;
+-			compatible = "allwinner,sun6i-a31-clock-reset";
+-			#reset-cells = <1>;
++		prcm@01f01400 {
++			compatible = "allwinner,sun6i-a31-prcm";
++			reg = <0x01f01400 0x200>;
++		};
++
++		cpucfg@01f01c00 {
++			compatible = "allwinner,sun6i-a31-cpuconfig";
++			reg = <0x01f01c00 0x300>;
+ 		};
+ 
+ 		ir: ir@01f02000 {
+ 			compatible = "allwinner,sun5i-a13-ir";
+-			clocks = <&apb0_gates 1>, <&ir_clk>;
++			clocks = <&ccu CLK_BUS_R_CIR>, <&ccu CLK_R_CIR>;
+ 			clock-names = "apb", "ir";
+-			resets = <&apb0_reset 1>;
++			resets = <&ccu RST_R_CIR>;
+ 			interrupts = <GIC_SPI 37 IRQ_TYPE_LEVEL_HIGH>;
+ 			reg = <0x01f02000 0x40>;
+ 			status = "disabled";
+@@ -568,8 +745,8 @@
+ 			compatible = "allwinner,sun8i-h3-r-pinctrl";
+ 			reg = <0x01f02c00 0x400>;
+ 			interrupts = <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
+-			clocks = <&apb0_gates 0>;
+-			resets = <&apb0_reset 0>;
++			clocks = <&ccu CLK_BUS_R_PIO>;
++			resets = <&ccu RST_R_PIO>;
+ 			gpio-controller;
+ 			#gpio-cells = <3>;
+ 			interrupt-controller;
+diff --git a/arch/arm/mach-sunxi/Kconfig b/arch/arm/mach-sunxi/Kconfig
+index b9863f9..00bba46 100644
+--- a/arch/arm/mach-sunxi/Kconfig
++++ b/arch/arm/mach-sunxi/Kconfig
+@@ -40,7 +40,7 @@ config MACH_SUN8I
+ 	bool "Allwinner sun8i Family SoCs support"
+ 	default ARCH_SUNXI
+ 	select ARM_GIC
+-	select MFD_SUN6I_PRCM
++#	select MFD_SUN6I_PRCM
+ 
+ config MACH_SUN9I
+ 	bool "Allwinner (sun9i) SoCs support"
+diff --git a/arch/arm/mach-sunxi/platsmp.c b/arch/arm/mach-sunxi/platsmp.c
+index 6642267..6bad94a 100644
+--- a/arch/arm/mach-sunxi/platsmp.c
++++ b/arch/arm/mach-sunxi/platsmp.c
+@@ -72,11 +72,13 @@ static int sun6i_smp_boot_secondary(unsigned int cpu,
+ 				    struct task_struct *idle)
+ {
+ 	u32 reg;
+-	int i;
+ 
+ 	if (!(prcm_membase && cpucfg_membase))
+ 		return -EFAULT;
+ 
++//temporary for a83t
++if (cpu >= 4) return -EFAULT;
++
+ 	spin_lock(&cpu_lock);
+ 
+ 	/* Set CPU boot address */
+@@ -95,9 +97,18 @@ static int sun6i_smp_boot_secondary(unsigned int cpu,
+ 	writel(reg & ~BIT(cpu), cpucfg_membase + CPUCFG_DBG_CTL1_REG);
+ 
+ 	/* Power up the CPU */
+-	for (i = 0; i <= 8; i++)
+-		writel(0xff >> i, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
+-	mdelay(10);
++	writel(0xfe, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
++	udelay(20);
++	writel(0xf8, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
++	udelay(10);
++	writel(0xe0, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
++	udelay(10);
++	writel(0xc0, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
++	udelay(10);
++	writel(0x80, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
++	udelay(10);
++	writel(0x00, prcm_membase + PRCM_CPU_PWR_CLAMP_REG(cpu));
++	udelay(20);
+ 
+ 	/* Clear CPU power-off gating */
+ 	reg = readl(prcm_membase + PRCM_CPU_PWROFF_REG);
+diff --git a/arch/arm/mach-sunxi/sunxi.c b/arch/arm/mach-sunxi/sunxi.c
+index 2e2bde2..53955cf 100644
+--- a/arch/arm/mach-sunxi/sunxi.c
++++ b/arch/arm/mach-sunxi/sunxi.c
+@@ -40,8 +40,10 @@ extern void __init sun6i_reset_init(void);
+ static void __init sun6i_timer_init(void)
+ {
+ 	of_clk_init(NULL);
++#ifndef CONFIG_MACH_SUN8I
+ 	if (IS_ENABLED(CONFIG_RESET_CONTROLLER))
+ 		sun6i_reset_init();
++#endif
+ 	clocksource_probe();
+ }
+ 
+diff --git a/drivers/clk/Kconfig b/drivers/clk/Kconfig
+index 6a8ac04..f3eadd2 100644
+--- a/drivers/clk/Kconfig
++++ b/drivers/clk/Kconfig
+@@ -206,7 +206,7 @@ source "drivers/clk/mvebu/Kconfig"
+ source "drivers/clk/qcom/Kconfig"
+ source "drivers/clk/renesas/Kconfig"
+ source "drivers/clk/samsung/Kconfig"
+-source "drivers/clk/sunxi-ng/Kconfig"
++#source "drivers/clk/sunxi-ng/Kconfig"
+ source "drivers/clk/tegra/Kconfig"
+ source "drivers/clk/ti/Kconfig"
+ source "drivers/clk/uniphier/Kconfig"
+diff --git a/drivers/clk/sunxi/Makefile b/drivers/clk/sunxi/Makefile
+index 39d2044..7619206 100644
+--- a/drivers/clk/sunxi/Makefile
++++ b/drivers/clk/sunxi/Makefile
+@@ -26,3 +26,7 @@ obj-$(CONFIG_MACH_SUN9I) += clk-sun9i-cpus.o
+ obj-$(CONFIG_MFD_SUN6I_PRCM) += \
+ 	clk-sun6i-ar100.o clk-sun6i-apb0.o clk-sun6i-apb0-gates.o \
+ 	clk-sun8i-apb0.o
++
++# only ccu driver for a83t and h3
++obj-$(CONFIG_MACH_SUN8I) := ccu-sun8i-a83t.o ccu-sun8i-h3.o
++obj-y += ccu.o
+diff --git a/drivers/dma/sun6i-dma.c b/drivers/dma/sun6i-dma.c
+index 8346199..51fd59d 100644
+--- a/drivers/dma/sun6i-dma.c
++++ b/drivers/dma/sun6i-dma.c
+@@ -64,7 +64,9 @@
+ #define DMA_CHAN_CUR_CFG	0x0c
+ #define DMA_CHAN_CFG_SRC_DRQ(x)		((x) & 0x1f)
+ #define DMA_CHAN_CFG_SRC_IO_MODE	BIT(5)
++//fixme: 2bits for H3
+ #define DMA_CHAN_CFG_SRC_LINEAR_MODE	(0 << 5)
++//fixme: x << 6 for sun9i - what for H3? doc = 6, driver = 7 !?
+ #define DMA_CHAN_CFG_SRC_BURST(x)	(((x) & 0x3) << 7)
+ #define DMA_CHAN_CFG_SRC_WIDTH(x)	(((x) & 0x3) << 9)
+ 
+@@ -98,9 +100,10 @@
+  * to a certain compatible string.
+  */
+ struct sun6i_dma_config {
+-	u32 nr_max_channels;
+-	u32 nr_max_requests;
+-	u32 nr_max_vchans;
++	u8 nr_max_channels;
++	u8 nr_max_requests;
++	u8 nr_max_vchans;
++	u8 burst_4;
+ };
+ 
+ /*
+@@ -240,6 +243,8 @@ static inline s8 convert_burst(u32 maxburst)
+ 	switch (maxburst) {
+ 	case 1:
+ 		return 0;
++	case 4:
++		return 1;
+ 	case 8:
+ 		return 2;
+ 	default:
+@@ -501,6 +506,10 @@ static int set_config(struct sun6i_dma_dev *sdev,
+ {
+ 	s8 src_width, dst_width, src_burst, dst_burst;
+ 
++	if (!sdev->cfg->burst_4 &&
++	    (sconfig->src_maxburst == 4 || sconfig->dst_maxburst == 4))
++		return -EINVAL;
++
+ 	switch (direction) {
+ 	case DMA_MEM_TO_DEV:
+ 		src_burst = convert_burst(sconfig->src_maxburst ?
+@@ -1020,12 +1029,14 @@ static struct sun6i_dma_config sun8i_a83t_dma_cfg = {
+ /*
+  * The H3 has 12 physical channels, a maximum DRQ port id of 27,
+  * and a total of 34 usable source and destination endpoints.
++ * Setting the maxburst to '4' is possible.
+  */
+ 
+ static struct sun6i_dma_config sun8i_h3_dma_cfg = {
+ 	.nr_max_channels = 12,
+ 	.nr_max_requests = 27,
+ 	.nr_max_vchans   = 34,
++	.burst_4	 = 1,
+ };
+ 
+ static const struct of_device_id sun6i_dma_match[] = {
+diff --git a/drivers/gpu/drm/Kconfig b/drivers/gpu/drm/Kconfig
+index 483059a..afd576f 100644
+--- a/drivers/gpu/drm/Kconfig
++++ b/drivers/gpu/drm/Kconfig
+@@ -187,6 +187,8 @@ source "drivers/gpu/drm/shmobile/Kconfig"
+ 
+ source "drivers/gpu/drm/sun4i/Kconfig"
+ 
++source "drivers/gpu/drm/sunxi/Kconfig"
++
+ source "drivers/gpu/drm/omapdrm/Kconfig"
+ 
+ source "drivers/gpu/drm/tilcdc/Kconfig"
+diff --git a/drivers/gpu/drm/Makefile b/drivers/gpu/drm/Makefile
+index 25c7204..120d0bf 100644
+--- a/drivers/gpu/drm/Makefile
++++ b/drivers/gpu/drm/Makefile
+@@ -70,6 +70,7 @@ obj-$(CONFIG_DRM_RCAR_DU) += rcar-du/
+ obj-$(CONFIG_DRM_SHMOBILE) +=shmobile/
+ obj-y			+= omapdrm/
+ obj-$(CONFIG_DRM_SUN4I) += sun4i/
++obj-$(CONFIG_DRM_SUNXI) += sunxi/
+ obj-y			+= tilcdc/
+ obj-$(CONFIG_DRM_QXL) += qxl/
+ obj-$(CONFIG_DRM_BOCHS) += bochs/
+diff --git a/drivers/mfd/axp20x.c b/drivers/mfd/axp20x.c
+index ba130be..4f2303d 100644
+--- a/drivers/mfd/axp20x.c
++++ b/drivers/mfd/axp20x.c
+@@ -38,8 +38,10 @@ static const char * const axp20x_model_names[] = {
+ 	"AXP221",
+ 	"AXP223",
+ 	"AXP288",
++	"AXP803",
+ 	"AXP806",
+ 	"AXP809",
++	"AXP813",
+ };
+ 
+ static const struct regmap_range axp152_writeable_ranges[] = {
+@@ -739,6 +741,14 @@ static struct mfd_cell axp809_cells[] = {
+ 	},
+ };
+ 
++static struct mfd_cell axp803_cells[] = {
++	{
++		.name			= "axp20x-pek",
++		.num_resources		= ARRAY_SIZE(axp809_pek_resources),
++		.resources		= axp809_pek_resources,
++	},
++};
++
+ static struct axp20x_dev *axp20x_pm_power_off;
+ static void axp20x_power_off(void)
+ {
+@@ -801,6 +811,11 @@ int axp20x_match_device(struct axp20x_dev *axp20x)
+ 		axp20x->regmap_cfg = &axp288_regmap_config;
+ 		axp20x->regmap_irq_chip = &axp288_regmap_irq_chip;
+ 		break;
++	case AXP803_ID:
++	case AXP813_ID:
++		axp20x->cells = axp803_cells;
++		axp20x->nr_cells = ARRAY_SIZE(axp803_cells);
++		break;
+ 	case AXP806_ID:
+ 		axp20x->nr_cells = ARRAY_SIZE(axp806_cells);
+ 		axp20x->cells = axp806_cells;
+diff --git a/drivers/mmc/core/host.c b/drivers/mmc/core/host.c
+index 98f25ff..f35233c 100644
+--- a/drivers/mmc/core/host.c
++++ b/drivers/mmc/core/host.c
+@@ -347,6 +347,15 @@ struct mmc_host *mmc_alloc_host(int extra, struct device *dev)
+ 	int err;
+ 	struct mmc_host *host;
+ 
++	int id = 0;
++
++	/* use DT label as mmc index */
++	if (dev->of_node) {
++		id = of_alias_get_id(dev->of_node, "mmc");
++		if (id < 0)
++			id = 0;
++	}
++
+ 	host = kzalloc(sizeof(struct mmc_host) + extra, GFP_KERNEL);
+ 	if (!host)
+ 		return NULL;
+@@ -361,7 +370,7 @@ struct mmc_host *mmc_alloc_host(int extra, struct device *dev)
+ 	}
+ 
+ 	spin_lock(&mmc_host_lock);
+-	err = ida_get_new(&mmc_host_ida, &host->index);
++	err = ida_get_new_above(&mmc_host_ida, id, &host->index);
+ 	spin_unlock(&mmc_host_lock);
+ 
+ 	if (err == -EAGAIN) {
+diff --git a/drivers/mmc/host/sunxi-mmc.c b/drivers/mmc/host/sunxi-mmc.c
+index c0a5c67..7c524a4 100644
+--- a/drivers/mmc/host/sunxi-mmc.c
++++ b/drivers/mmc/host/sunxi-mmc.c
+@@ -178,6 +178,9 @@
+ #define SDXC_SEND_AUTO_STOPCCSD		BIT(9)
+ #define SDXC_CEATA_DEV_IRQ_ENABLE	BIT(10)
+ 
++/* NewTiming Set Register */
++#define SDXC_NEWMODE_ENABLE		BIT(31)
++
+ /* IDMA controller bus mod bit field */
+ #define SDXC_IDMAC_SOFT_RESET		BIT(0)
+ #define SDXC_IDMAC_FIX_BURST		BIT(1)
+@@ -236,8 +239,8 @@
+ #define SDXC_CAL_TIMEOUT	3	/* in seconds, 3s is enough*/
+ 
+ struct sunxi_mmc_clk_delay {
+-	u32 output;
+-	u32 sample;
++	u16 output;
++	u16 sample;
+ };
+ 
+ struct sunxi_idma_des {
+@@ -725,7 +728,7 @@ static int sunxi_mmc_calibrate(struct sunxi_mmc_host *host, int reg_off)
+ static int sunxi_mmc_clk_set_phase(struct sunxi_mmc_host *host,
+ 				   struct mmc_ios *ios, u32 rate)
+ {
+-	int index;
++	int ret, index;
+ 
+ 	if (!host->cfg->clk_delays)
+ 		return 0;
+@@ -748,8 +751,23 @@ static int sunxi_mmc_clk_set_phase(struct sunxi_mmc_host *host,
+ 		return -EINVAL;
+ 	}
+ 
+-	clk_set_phase(host->clk_sample, host->cfg->clk_delays[index].sample);
+-	clk_set_phase(host->clk_output, host->cfg->clk_delays[index].output);
++	ret = clk_set_phase(host->clk_sample, host->cfg->clk_delays[index].sample);
++
++	/*
++	 * EPERM is returned when the MMC clock is switched to the new mode.
++	 * In this mode, the phase delays are defined in the MMC register NTSR.
++	 * Actually, as the reset/boot values are fine enough, they are not
++	 * changed here.
++	 */
++	if (ret == -EPERM) {
++		mmc_writel(host, REG_SD_NTSR,
++			   mmc_readl(host, REG_SD_NTSR) | SDXC_NEWMODE_ENABLE);
++	} else {
++		mmc_writel(host, REG_SD_NTSR,
++			   mmc_readl(host, REG_SD_NTSR) & ~SDXC_NEWMODE_ENABLE);
++		clk_set_phase(host->clk_output,
++				host->cfg->clk_delays[index].output);
++	}
+ 
+ 	return 0;
+ }
+diff --git a/drivers/net/ethernet/allwinner/Kconfig b/drivers/net/ethernet/allwinner/Kconfig
+index 47da7e7..fec66df 100644
+--- a/drivers/net/ethernet/allwinner/Kconfig
++++ b/drivers/net/ethernet/allwinner/Kconfig
+@@ -33,4 +33,18 @@ config SUN4I_EMAC
+           To compile this driver as a module, choose M here.  The module
+           will be called sun4i-emac.
+ 
++
++config SUN8I_EMAC
++	tristate "Allwinner sun8i EMAC support"
++	depends on ARCH_SUNXI || COMPILE_TEST
++	depends on OF
++	select MII
++	select PHYLIB
++        ---help---
++	  This driver support the sun8i EMAC ethernet driver present on
++	  H3/A83T/A64 Allwinner SoCs.
++
++	  To compile this driver as a module, choose M here.  The module
++	  will be called sun8i-emac.
++
+ endif # NET_VENDOR_ALLWINNER
+diff --git a/drivers/net/ethernet/allwinner/Makefile b/drivers/net/ethernet/allwinner/Makefile
+index 03129f7..8bd1693c 100644
+--- a/drivers/net/ethernet/allwinner/Makefile
++++ b/drivers/net/ethernet/allwinner/Makefile
+@@ -3,3 +3,4 @@
+ #
+ 
+ obj-$(CONFIG_SUN4I_EMAC) += sun4i-emac.o
++obj-$(CONFIG_SUN8I_EMAC) += sun8i-emac.o
+diff --git a/drivers/phy/phy-sun4i-usb.c b/drivers/phy/phy-sun4i-usb.c
+index b9342a2..fd0cc7d 100644
+--- a/drivers/phy/phy-sun4i-usb.c
++++ b/drivers/phy/phy-sun4i-usb.c
+@@ -85,6 +85,17 @@
+ #define PHY_DISCON_TH_SEL		0x2a
+ #define PHY_SQUELCH_DETECT		0x3c
+ 
++//from wens https://github.com/wens/linux/tree/a83-usb
++/* A83T specific control bits for PHY0 */
++#define PHY_CTL_VBUSVLDEXT		BIT(5)
++#define PHY_CTL_SIDDQ			BIT(3)
++
++/* A83T specific control bits for PHY2 HSIC */
++#define SUNXI_EHCI_HS_FORCE             BIT(20)
++#define SUNXI_HSIC_CONNECT_DET          BIT(17)
++#define SUNXI_HSIC_CONNECT_INT          BIT(16)
++#define SUNXI_HSIC                      BIT(1)
++
+ #define MAX_PHYS			4
+ 
+ /*
+@@ -98,6 +109,7 @@ enum sun4i_usb_phy_type {
+ 	sun4i_a10_phy,
+ 	sun6i_a31_phy,
+ 	sun8i_a33_phy,
++	sun8i_a83t_phy,
+ 	sun8i_h3_phy,
+ 	sun50i_a64_phy,
+ };
+@@ -229,6 +241,7 @@ static void sun4i_usb_phy_write(struct sun4i_usb_phy *phy, u32 addr, u32 data,
+ 
+ static void sun4i_usb_phy_passby(struct sun4i_usb_phy *phy, int enable)
+ {
++	struct sun4i_usb_phy_data *phy_data = to_sun4i_usb_phy_data(phy);
+ 	u32 bits, reg_value;
+ 
+ 	if (!phy->pmu)
+@@ -237,6 +250,11 @@ static void sun4i_usb_phy_passby(struct sun4i_usb_phy *phy, int enable)
+ 	bits = SUNXI_AHB_ICHR8_EN | SUNXI_AHB_INCR4_BURST_EN |
+ 		SUNXI_AHB_INCRX_ALIGN_EN | SUNXI_ULPI_BYPASS_EN;
+ 
++	/* A83T USB2 is HSIC */
++	if (phy_data->cfg->type == sun8i_a83t_phy && phy->index == 2)
++		bits |= SUNXI_EHCI_HS_FORCE | SUNXI_HSIC_CONNECT_INT |
++			SUNXI_HSIC;
++
+ 	reg_value = readl(phy->pmu);
+ 
+ 	if (enable)
+@@ -274,6 +292,15 @@ static int sun4i_usb_phy_init(struct phy *_phy)
+ 			val = readl(data->base + REG_PHY_UNK_H3);
+ 			writel(val & ~1, data->base + REG_PHY_UNK_H3);
+ 		}
++	} else if (data->cfg->type == sun8i_a83t_phy) {
++		void __iomem *phyctl = data->base + data->cfg->phyctl_offset;
++
++		if (phy->index == 0) {
++			val = readl(phyctl);
++			val |= PHY_CTL_VBUSVLDEXT;
++			val &= ~PHY_CTL_SIDDQ;
++			writel(val, phyctl);
++		}
+ 	} else {
+ 		/* Enable USB 45 Ohm resistor calibration */
+ 		if (phy->index == 0)
+@@ -311,6 +338,12 @@ static int sun4i_usb_phy_exit(struct phy *_phy)
+ 	struct sun4i_usb_phy_data *data = to_sun4i_usb_phy_data(phy);
+ 
+ 	if (phy->index == 0) {
++		if (data->cfg->type == sun8i_a83t_phy) {
++			void __iomem *phyctl = data->base + data->cfg->phyctl_offset;
++
++			writel(readl(phyctl) | PHY_CTL_SIDDQ, phyctl);
++		}
++
+ 		/* Disable pull-ups */
+ 		sun4i_usb_phy0_update_iscr(_phy, ISCR_DPDM_PULLUP_EN, 0);
+ 		sun4i_usb_phy0_update_iscr(_phy, ISCR_ID_PULLUP_EN, 0);
+@@ -811,6 +844,13 @@ static const struct sun4i_usb_phy_cfg sun8i_a33_cfg = {
+ 	.enable_pmu_unk1 = false,
+ };
+ 
++static const struct sun4i_usb_phy_cfg sun8i_a83t_cfg = {
++	.num_phys = 3,
++	.type = sun8i_a83t_phy,
++	.phyctl_offset = REG_PHYCTL_A10,
++	.dedicated_clocks = true,
++};
++
+ static const struct sun4i_usb_phy_cfg sun8i_h3_cfg = {
+ 	.num_phys = 4,
+ 	.type = sun8i_h3_phy,
+@@ -835,6 +875,7 @@ static const struct of_device_id sun4i_usb_phy_of_match[] = {
+ 	{ .compatible = "allwinner,sun7i-a20-usb-phy", .data = &sun7i_a20_cfg },
+ 	{ .compatible = "allwinner,sun8i-a23-usb-phy", .data = &sun8i_a23_cfg },
+ 	{ .compatible = "allwinner,sun8i-a33-usb-phy", .data = &sun8i_a33_cfg },
++	{ .compatible = "allwinner,sun8i-a83t-usb-phy", .data = &sun8i_a83t_cfg },
+ 	{ .compatible = "allwinner,sun8i-h3-usb-phy", .data = &sun8i_h3_cfg },
+ 	{ .compatible = "allwinner,sun50i-a64-usb-phy",
+ 	  .data = &sun50i_a64_cfg},
+diff --git a/drivers/pinctrl/sunxi/Kconfig b/drivers/pinctrl/sunxi/Kconfig
+index bff1ffc..19a8ef9 100644
+--- a/drivers/pinctrl/sunxi/Kconfig
++++ b/drivers/pinctrl/sunxi/Kconfig
+@@ -55,6 +55,11 @@ config PINCTRL_SUN8I_A23_R
+ 	depends on RESET_CONTROLLER
+ 	select PINCTRL_SUNXI
+ 
++config PINCTRL_SUN8I_A83T_R
++	def_bool MACH_SUN8I
++	depends on RESET_CONTROLLER
++	select PINCTRL_SUNXI_COMMON
++
+ config PINCTRL_SUN8I_H3
+ 	def_bool MACH_SUN8I
+ 	select PINCTRL_SUNXI
+diff --git a/drivers/pinctrl/sunxi/Makefile b/drivers/pinctrl/sunxi/Makefile
+index 95f93d0..dcf2801 100644
+--- a/drivers/pinctrl/sunxi/Makefile
++++ b/drivers/pinctrl/sunxi/Makefile
+@@ -15,6 +15,7 @@ obj-$(CONFIG_PINCTRL_SUN8I_A23_R)	+= pinctrl-sun8i-a23-r.o
+ obj-$(CONFIG_PINCTRL_SUN8I_A33)		+= pinctrl-sun8i-a33.o
+ obj-$(CONFIG_PINCTRL_SUN50I_A64)	+= pinctrl-sun50i-a64.o
+ obj-$(CONFIG_PINCTRL_SUN8I_A83T)	+= pinctrl-sun8i-a83t.o
++obj-$(CONFIG_PINCTRL_SUN8I_A83T_R)	+= pinctrl-sun8i-a83t-r.o
+ obj-$(CONFIG_PINCTRL_SUN8I_H3)		+= pinctrl-sun8i-h3.o
+ obj-$(CONFIG_PINCTRL_SUN8I_H3_R)	+= pinctrl-sun8i-h3-r.o
+ obj-$(CONFIG_PINCTRL_SUN9I_A80)		+= pinctrl-sun9i-a80.o
+diff --git a/drivers/regulator/Makefile b/drivers/regulator/Makefile
+index 2142a5d..a678ba6 100644
+--- a/drivers/regulator/Makefile
++++ b/drivers/regulator/Makefile
+@@ -21,7 +21,8 @@ obj-$(CONFIG_REGULATOR_ANATOP) += anatop-regulator.o
+ obj-$(CONFIG_REGULATOR_ARIZONA) += arizona-micsupp.o arizona-ldo1.o
+ obj-$(CONFIG_REGULATOR_AS3711) += as3711-regulator.o
+ obj-$(CONFIG_REGULATOR_AS3722) += as3722-regulator.o
+-obj-$(CONFIG_REGULATOR_AXP20X) += axp20x-regulator.o
++obj-$(CONFIG_REGULATOR_AXP20X) += axp20x-regulator.o axp-regulator.o \
++				axp803.o axp813.o
+ obj-$(CONFIG_REGULATOR_BCM590XX) += bcm590xx-regulator.o
+ obj-$(CONFIG_REGULATOR_DA903X)	+= da903x.o
+ obj-$(CONFIG_REGULATOR_DA9052)	+= da9052-regulator.o
+diff --git a/drivers/regulator/axp20x-regulator.c b/drivers/regulator/axp20x-regulator.c
+index 54382ef..9dd9ca3 100644
+--- a/drivers/regulator/axp20x-regulator.c
++++ b/drivers/regulator/axp20x-regulator.c
+@@ -24,137 +24,7 @@
+ #include <linux/regulator/driver.h>
+ #include <linux/regulator/of_regulator.h>
+ 
+-#define AXP20X_IO_ENABLED		0x03
+-#define AXP20X_IO_DISABLED		0x07
+-
+-#define AXP22X_IO_ENABLED		0x03
+-#define AXP22X_IO_DISABLED		0x04
+-
+-#define AXP20X_WORKMODE_DCDC2_MASK	BIT(2)
+-#define AXP20X_WORKMODE_DCDC3_MASK	BIT(1)
+-#define AXP22X_WORKMODE_DCDCX_MASK(x)	BIT(x)
+-
+-#define AXP20X_FREQ_DCDC_MASK		0x0f
+-
+-#define AXP22X_MISC_N_VBUSEN_FUNC	BIT(4)
+-
+-#define AXP_DESC_IO(_family, _id, _match, _supply, _min, _max, _step, _vreg,	\
+-		    _vmask, _ereg, _emask, _enable_val, _disable_val)		\
+-	[_family##_##_id] = {							\
+-		.name		= (_match),					\
+-		.supply_name	= (_supply),					\
+-		.of_match	= of_match_ptr(_match),				\
+-		.regulators_node = of_match_ptr("regulators"),			\
+-		.type		= REGULATOR_VOLTAGE,				\
+-		.id		= _family##_##_id,				\
+-		.n_voltages	= (((_max) - (_min)) / (_step) + 1),		\
+-		.owner		= THIS_MODULE,					\
+-		.min_uV		= (_min) * 1000,				\
+-		.uV_step	= (_step) * 1000,				\
+-		.vsel_reg	= (_vreg),					\
+-		.vsel_mask	= (_vmask),					\
+-		.enable_reg	= (_ereg),					\
+-		.enable_mask	= (_emask),					\
+-		.enable_val	= (_enable_val),				\
+-		.disable_val	= (_disable_val),				\
+-		.ops		= &axp20x_ops,					\
+-	}
+-
+-#define AXP_DESC(_family, _id, _match, _supply, _min, _max, _step, _vreg,	\
+-		 _vmask, _ereg, _emask) 					\
+-	[_family##_##_id] = {							\
+-		.name		= (_match),					\
+-		.supply_name	= (_supply),					\
+-		.of_match	= of_match_ptr(_match),				\
+-		.regulators_node = of_match_ptr("regulators"),			\
+-		.type		= REGULATOR_VOLTAGE,				\
+-		.id		= _family##_##_id,				\
+-		.n_voltages	= (((_max) - (_min)) / (_step) + 1),		\
+-		.owner		= THIS_MODULE,					\
+-		.min_uV		= (_min) * 1000,				\
+-		.uV_step	= (_step) * 1000,				\
+-		.vsel_reg	= (_vreg),					\
+-		.vsel_mask	= (_vmask),					\
+-		.enable_reg	= (_ereg),					\
+-		.enable_mask	= (_emask),					\
+-		.ops		= &axp20x_ops,					\
+-	}
+-
+-#define AXP_DESC_SW(_family, _id, _match, _supply, _ereg, _emask)		\
+-	[_family##_##_id] = {							\
+-		.name		= (_match),					\
+-		.supply_name	= (_supply),					\
+-		.of_match	= of_match_ptr(_match),				\
+-		.regulators_node = of_match_ptr("regulators"),			\
+-		.type		= REGULATOR_VOLTAGE,				\
+-		.id		= _family##_##_id,				\
+-		.owner		= THIS_MODULE,					\
+-		.enable_reg	= (_ereg),					\
+-		.enable_mask	= (_emask),					\
+-		.ops		= &axp20x_ops_sw,				\
+-	}
+-
+-#define AXP_DESC_FIXED(_family, _id, _match, _supply, _volt)			\
+-	[_family##_##_id] = {							\
+-		.name		= (_match),					\
+-		.supply_name	= (_supply),					\
+-		.of_match	= of_match_ptr(_match),				\
+-		.regulators_node = of_match_ptr("regulators"),			\
+-		.type		= REGULATOR_VOLTAGE,				\
+-		.id		= _family##_##_id,				\
+-		.n_voltages	= 1,						\
+-		.owner		= THIS_MODULE,					\
+-		.min_uV		= (_volt) * 1000,				\
+-		.ops		= &axp20x_ops_fixed				\
+-	}
+-
+-#define AXP_DESC_RANGES(_family, _id, _match, _supply, _ranges, _n_voltages,	\
+-			_vreg, _vmask, _ereg, _emask)				\
+-	[_family##_##_id] = {							\
+-		.name		= (_match),					\
+-		.supply_name	= (_supply),					\
+-		.of_match	= of_match_ptr(_match),				\
+-		.regulators_node = of_match_ptr("regulators"),			\
+-		.type		= REGULATOR_VOLTAGE,				\
+-		.id		= _family##_##_id,				\
+-		.n_voltages	= (_n_voltages),				\
+-		.owner		= THIS_MODULE,					\
+-		.vsel_reg	= (_vreg),					\
+-		.vsel_mask	= (_vmask),					\
+-		.enable_reg	= (_ereg),					\
+-		.enable_mask	= (_emask),					\
+-		.linear_ranges	= (_ranges),					\
+-		.n_linear_ranges = ARRAY_SIZE(_ranges),				\
+-		.ops		= &axp20x_ops_range,				\
+-	}
+-
+-static struct regulator_ops axp20x_ops_fixed = {
+-	.list_voltage		= regulator_list_voltage_linear,
+-};
+-
+-static struct regulator_ops axp20x_ops_range = {
+-	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
+-	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
+-	.list_voltage		= regulator_list_voltage_linear_range,
+-	.enable			= regulator_enable_regmap,
+-	.disable		= regulator_disable_regmap,
+-	.is_enabled		= regulator_is_enabled_regmap,
+-};
+-
+-static struct regulator_ops axp20x_ops = {
+-	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
+-	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
+-	.list_voltage		= regulator_list_voltage_linear,
+-	.enable			= regulator_enable_regmap,
+-	.disable		= regulator_disable_regmap,
+-	.is_enabled		= regulator_is_enabled_regmap,
+-};
+-
+-static struct regulator_ops axp20x_ops_sw = {
+-	.enable			= regulator_enable_regmap,
+-	.disable		= regulator_disable_regmap,
+-	.is_enabled		= regulator_is_enabled_regmap,
+-};
++#include "axp-regulator.h"
+ 
+ static const struct regulator_linear_range axp20x_ldo4_ranges[] = {
+ 	REGULATOR_LINEAR_RANGE(1250000, 0x0, 0x0, 0),
+@@ -232,18 +102,6 @@ static const struct regulator_desc axp22x_regulators[] = {
+ 	AXP_DESC_FIXED(AXP22X, RTC_LDO, "rtc_ldo", "ips", 3000),
+ };
+ 
+-static const struct regulator_desc axp22x_drivevbus_regulator = {
+-	.name		= "drivevbus",
+-	.supply_name	= "drivevbus",
+-	.of_match	= of_match_ptr("drivevbus"),
+-	.regulators_node = of_match_ptr("regulators"),
+-	.type		= REGULATOR_VOLTAGE,
+-	.owner		= THIS_MODULE,
+-	.enable_reg	= AXP20X_VBUS_IPSOUT_MGMT,
+-	.enable_mask	= BIT(2),
+-	.ops		= &axp20x_ops_sw,
+-};
+-
+ static const struct regulator_linear_range axp806_dcdca_ranges[] = {
+ 	REGULATOR_LINEAR_RANGE(600000, 0x0, 0x32, 10000),
+ 	REGULATOR_LINEAR_RANGE(1120000, 0x33, 0x47, 20000),
+@@ -347,294 +205,83 @@ static const struct regulator_desc axp809_regulators[] = {
+ 	AXP_DESC_SW(AXP809, SW, "sw", "swin", AXP22X_PWR_OUT_CTRL2, BIT(6)),
+ };
+ 
+-static int axp20x_set_dcdc_freq(struct platform_device *pdev, u32 dcdcfreq)
+-{
+-	struct axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
+-	unsigned int reg = AXP20X_DCDC_FREQ;
+-	u32 min, max, def, step;
+-
+-	switch (axp20x->variant) {
+-	case AXP202_ID:
+-	case AXP209_ID:
+-		min = 750;
+-		max = 1875;
+-		def = 1500;
+-		step = 75;
+-		break;
+-	case AXP806_ID:
+-		/*
+-		 * AXP806 DCDC work frequency setting has the same range and
+-		 * step as AXP22X, but at a different register.
+-		 * Fall through to the check below.
+-		 * (See include/linux/mfd/axp20x.h)
+-		 */
+-		reg = AXP806_DCDC_FREQ_CTRL;
+-	case AXP221_ID:
+-	case AXP223_ID:
+-	case AXP809_ID:
+-		min = 1800;
+-		max = 4050;
+-		def = 3000;
+-		step = 150;
+-		break;
+-	default:
+-		dev_err(&pdev->dev,
+-			"Setting DCDC frequency for unsupported AXP variant\n");
+-		return -EINVAL;
+-	}
+-
+-	if (dcdcfreq == 0)
+-		dcdcfreq = def;
+-
+-	if (dcdcfreq < min) {
+-		dcdcfreq = min;
+-		dev_warn(&pdev->dev, "DCDC frequency too low. Set to %ukHz\n",
+-			 min);
+-	}
+-
+-	if (dcdcfreq > max) {
+-		dcdcfreq = max;
+-		dev_warn(&pdev->dev, "DCDC frequency too high. Set to %ukHz\n",
+-			 max);
+-	}
+-
+-	dcdcfreq = (dcdcfreq - min) / step;
+-
+-	return regmap_update_bits(axp20x->regmap, reg,
+-				  AXP20X_FREQ_DCDC_MASK, dcdcfreq);
+-}
+-
+-static int axp20x_regulator_parse_dt(struct platform_device *pdev)
+-{
+-	struct device_node *np, *regulators;
+-	int ret;
+-	u32 dcdcfreq = 0;
+-
+-	np = of_node_get(pdev->dev.parent->of_node);
+-	if (!np)
+-		return 0;
+-
+-	regulators = of_get_child_by_name(np, "regulators");
+-	if (!regulators) {
+-		dev_warn(&pdev->dev, "regulators node not found\n");
+-	} else {
+-		of_property_read_u32(regulators, "x-powers,dcdc-freq", &dcdcfreq);
+-		ret = axp20x_set_dcdc_freq(pdev, dcdcfreq);
+-		if (ret < 0) {
+-			dev_err(&pdev->dev, "Error setting dcdc frequency: %d\n", ret);
+-			return ret;
+-		}
+-
+-		of_node_put(regulators);
+-	}
+-
+-	return 0;
+-}
+-
+-static int axp20x_set_dcdc_workmode(struct regulator_dev *rdev, int id, u32 workmode)
+-{
+-	struct axp20x_dev *axp20x = rdev_get_drvdata(rdev);
+-	unsigned int reg = AXP20X_DCDC_MODE;
+-	unsigned int mask;
+-
+-	switch (axp20x->variant) {
+-	case AXP202_ID:
+-	case AXP209_ID:
+-		if ((id != AXP20X_DCDC2) && (id != AXP20X_DCDC3))
+-			return -EINVAL;
+-
+-		mask = AXP20X_WORKMODE_DCDC2_MASK;
+-		if (id == AXP20X_DCDC3)
+-			mask = AXP20X_WORKMODE_DCDC3_MASK;
+-
+-		workmode <<= ffs(mask) - 1;
+-		break;
+-
+-	case AXP806_ID:
+-		reg = AXP806_DCDC_MODE_CTRL2;
+-		/*
+-		 * AXP806 DCDC regulator IDs have the same range as AXP22X.
+-		 * Fall through to the check below.
+-		 * (See include/linux/mfd/axp20x.h)
+-		 */
+-	case AXP221_ID:
+-	case AXP223_ID:
+-	case AXP809_ID:
+-		if (id < AXP22X_DCDC1 || id > AXP22X_DCDC5)
+-			return -EINVAL;
+-
+-		mask = AXP22X_WORKMODE_DCDCX_MASK(id - AXP22X_DCDC1);
+-		workmode <<= id - AXP22X_DCDC1;
+-		break;
+-
+-	default:
+-		/* should not happen */
+-		WARN_ON(1);
+-		return -EINVAL;
+-	}
+-
+-	return regmap_update_bits(rdev->regmap, reg, mask, workmode);
+-}
+-
+ /*
+- * This function checks whether a regulator is part of a poly-phase
+- * output setup based on the registers settings. Returns true if it is.
++ * This function checks which regulators are part of poly-phase
++ * output setups based on the registers settings.
++ * Returns a bitmap of these regulators.
+  */
+-static bool axp20x_is_polyphase_slave(struct axp20x_dev *axp20x, int id)
++static u32 axp20x_polyphase_slave(struct axp20x_dev *axp20x)
+ {
+-	u32 reg = 0;
+-
+-	/* Only AXP806 has poly-phase outputs */
+-	if (axp20x->variant != AXP806_ID)
+-		return false;
++	u32 reg = 0, bitmap = 0;
+ 
+ 	regmap_read(axp20x->regmap, AXP806_DCDC_MODE_CTRL2, &reg);
+ 
+-	switch (id) {
+-	case AXP806_DCDCB:
+-		return (((reg & GENMASK(7, 6)) == BIT(6)) ||
+-			((reg & GENMASK(7, 6)) == BIT(7)));
+-	case AXP806_DCDCC:
+-		return ((reg & GENMASK(7, 6)) == BIT(7));
+-	case AXP806_DCDCE:
+-		return !!(reg & BIT(5));
+-	}
++	if ((reg & GENMASK(7, 6)) == BIT(5))
++		bitmap |= 1 << AXP806_DCDCE;
++	if ((reg & GENMASK(7, 6)) == BIT(6))
++		bitmap |= 1 << AXP806_DCDCB;
++	if ((reg & GENMASK(7, 6)) == BIT(7))
++		bitmap |= (1 << AXP806_DCDCB) | (1 << AXP806_DCDCC);
+ 
+-	return false;
++	return bitmap;
+ }
+ 
+ static int axp20x_regulator_probe(struct platform_device *pdev)
+ {
+-	struct regulator_dev *rdev;
+-	struct axp20x_dev *axp20x = dev_get_drvdata(pdev->dev.parent);
+-	const struct regulator_desc *regulators;
+-	struct regulator_config config = {
+-		.dev = pdev->dev.parent,
+-		.regmap = axp20x->regmap,
+-		.driver_data = axp20x,
+-	};
+-	int ret, i, nregulators;
+-	u32 workmode;
+-	const char *dcdc1_name = axp22x_regulators[AXP22X_DCDC1].name;
+-	const char *dcdc5_name = axp22x_regulators[AXP22X_DCDC5].name;
+-	bool drivevbus = false;
++	struct device *dev = pdev->dev.parent;
++	struct axp20x_dev *axp20x = dev_get_drvdata(dev);
++	struct axp_cfg axp_cfg;
++
++	axp_cfg.dcdc1_ix = -1;
++	axp_cfg.dcdc5_ix = -1;
++	axp_cfg.dc1sw_ix = -1;
++	axp_cfg.dc5ldo_ix = -1;
++	axp_cfg.drivevbus = false;
++	axp_cfg.skip_bitmap = 0;
+ 
+ 	switch (axp20x->variant) {
+ 	case AXP202_ID:
+ 	case AXP209_ID:
+-		regulators = axp20x_regulators;
+-		nregulators = AXP20X_REG_ID_MAX;
++		axp_cfg.regulators = axp20x_regulators;
++		axp_cfg.nregulators = AXP20X_REG_ID_MAX;
+ 		break;
+ 	case AXP221_ID:
+ 	case AXP223_ID:
+-		regulators = axp22x_regulators;
+-		nregulators = AXP22X_REG_ID_MAX;
+-		drivevbus = of_property_read_bool(pdev->dev.parent->of_node,
++		axp_cfg.regulators = axp22x_regulators;
++		axp_cfg.nregulators = AXP22X_REG_ID_MAX;
++		axp_cfg.dcdc1_ix = AXP22X_DCDC1;
++		axp_cfg.dcdc5_ix = AXP22X_DCDC5;
++		axp_cfg.dc1sw_ix = AXP22X_DC1SW;
++		axp_cfg.dc5ldo_ix = AXP22X_DC5LDO;
++		axp_cfg.drivevbus = of_property_read_bool(dev->of_node,
+ 						  "x-powers,drive-vbus-en");
+ 		break;
+ 	case AXP806_ID:
+-		regulators = axp806_regulators;
+-		nregulators = AXP806_REG_ID_MAX;
++		axp_cfg.regulators = axp806_regulators;
++		axp_cfg.nregulators = AXP806_REG_ID_MAX;
++
++		/*
++		 * The regulators which are slave in a poly-phase setup
++		 * are skipped, as their controls are bound to the master
++		 * regulator and won't work.
++		 */
++		axp_cfg.skip_bitmap |= axp20x_polyphase_slave(axp20x);
+ 		break;
+ 	case AXP809_ID:
+-		regulators = axp809_regulators;
+-		nregulators = AXP809_REG_ID_MAX;
++		axp_cfg.regulators = axp809_regulators;
++		axp_cfg.nregulators = AXP809_REG_ID_MAX;
++		axp_cfg.dcdc1_ix = AXP809_DCDC1;
++		axp_cfg.dcdc5_ix = AXP809_DCDC5;
++		axp_cfg.dc1sw_ix = AXP809_DC1SW;
++		axp_cfg.dc5ldo_ix = AXP809_DC5LDO;
+ 		break;
+ 	default:
+-		dev_err(&pdev->dev, "Unsupported AXP variant: %ld\n",
++		dev_err(dev, "Unsupported AXP variant: %ld\n",
+ 			axp20x->variant);
+ 		return -EINVAL;
+ 	}
+ 
+-	/* This only sets the dcdc freq. Ignore any errors */
+-	axp20x_regulator_parse_dt(pdev);
+-
+-	for (i = 0; i < nregulators; i++) {
+-		const struct regulator_desc *desc = &regulators[i];
+-		struct regulator_desc *new_desc;
+-
+-		/*
+-		 * If this regulator is a slave in a poly-phase setup,
+-		 * skip it, as its controls are bound to the master
+-		 * regulator and won't work.
+-		 */
+-		if (axp20x_is_polyphase_slave(axp20x, i))
+-			continue;
+-
+-		/*
+-		 * Regulators DC1SW and DC5LDO are connected internally,
+-		 * so we have to handle their supply names separately.
+-		 *
+-		 * We always register the regulators in proper sequence,
+-		 * so the supply names are correctly read. See the last
+-		 * part of this loop to see where we save the DT defined
+-		 * name.
+-		 */
+-		if ((regulators == axp22x_regulators && i == AXP22X_DC1SW) ||
+-		    (regulators == axp809_regulators && i == AXP809_DC1SW)) {
+-			new_desc = devm_kzalloc(&pdev->dev, sizeof(*desc),
+-						GFP_KERNEL);
+-			*new_desc = regulators[i];
+-			new_desc->supply_name = dcdc1_name;
+-			desc = new_desc;
+-		}
+-
+-		if ((regulators == axp22x_regulators && i == AXP22X_DC5LDO) ||
+-		    (regulators == axp809_regulators && i == AXP809_DC5LDO)) {
+-			new_desc = devm_kzalloc(&pdev->dev, sizeof(*desc),
+-						GFP_KERNEL);
+-			*new_desc = regulators[i];
+-			new_desc->supply_name = dcdc5_name;
+-			desc = new_desc;
+-		}
+-
+-		rdev = devm_regulator_register(&pdev->dev, desc, &config);
+-		if (IS_ERR(rdev)) {
+-			dev_err(&pdev->dev, "Failed to register %s\n",
+-				regulators[i].name);
+-
+-			return PTR_ERR(rdev);
+-		}
+-
+-		ret = of_property_read_u32(rdev->dev.of_node,
+-					   "x-powers,dcdc-workmode",
+-					   &workmode);
+-		if (!ret) {
+-			if (axp20x_set_dcdc_workmode(rdev, i, workmode))
+-				dev_err(&pdev->dev, "Failed to set workmode on %s\n",
+-					rdev->desc->name);
+-		}
+-
+-		/*
+-		 * Save AXP22X DCDC1 / DCDC5 regulator names for later.
+-		 */
+-		if ((regulators == axp22x_regulators && i == AXP22X_DCDC1) ||
+-		    (regulators == axp809_regulators && i == AXP809_DCDC1))
+-			of_property_read_string(rdev->dev.of_node,
+-						"regulator-name",
+-						&dcdc1_name);
+-
+-		if ((regulators == axp22x_regulators && i == AXP22X_DCDC5) ||
+-		    (regulators == axp809_regulators && i == AXP809_DCDC5))
+-			of_property_read_string(rdev->dev.of_node,
+-						"regulator-name",
+-						&dcdc5_name);
+-	}
+-
+-	if (drivevbus) {
+-		/* Change N_VBUSEN sense pin to DRIVEVBUS output pin */
+-		regmap_update_bits(axp20x->regmap, AXP20X_OVER_TMP,
+-				   AXP22X_MISC_N_VBUSEN_FUNC, 0);
+-		rdev = devm_regulator_register(&pdev->dev,
+-					       &axp22x_drivevbus_regulator,
+-					       &config);
+-		if (IS_ERR(rdev)) {
+-			dev_err(&pdev->dev, "Failed to register drivevbus\n");
+-			return PTR_ERR(rdev);
+-		}
+-	}
+-
+-	return 0;
++	return axp_regulator_create(dev, &axp_cfg);
+ }
+ 
+ static struct platform_driver axp20x_regulator_driver = {
+diff --git a/drivers/reset/Makefile b/drivers/reset/Makefile
+index bbe7026..3167172 100644
+--- a/drivers/reset/Makefile
++++ b/drivers/reset/Makefile
+@@ -9,7 +9,9 @@ obj-$(CONFIG_RESET_OXNAS) += reset-oxnas.o
+ obj-$(CONFIG_RESET_PISTACHIO) += reset-pistachio.o
+ obj-$(CONFIG_RESET_SOCFPGA) += reset-socfpga.o
+ obj-$(CONFIG_RESET_STM32) += reset-stm32.o
++ifneq ($(CONFIG_MACH_SUN8I), y)
+ obj-$(CONFIG_RESET_SUNXI) += reset-sunxi.o
++endif
+ obj-$(CONFIG_TI_SYSCON_RESET) += reset-ti-syscon.o
+ obj-$(CONFIG_RESET_UNIPHIER) += reset-uniphier.o
+ obj-$(CONFIG_RESET_ZYNQ) += reset-zynq.o
+diff --git a/drivers/thermal/Kconfig b/drivers/thermal/Kconfig
+index a13541b..82aec94 100644
+--- a/drivers/thermal/Kconfig
++++ b/drivers/thermal/Kconfig
+@@ -397,6 +397,13 @@ depends on ARCH_STI && OF
+ source "drivers/thermal/st/Kconfig"
+ endmenu
+ 
++config SUN8I_THS
++	tristate "sun8i THS driver"
++	depends on MACH_SUN8I
++	depends on OF
++	help
++	  Enable this to support thermal reporting on some newer Allwinner SoCs.
++
+ config TANGO_THERMAL
+ 	tristate "Tango thermal management"
+ 	depends on ARCH_TANGO || COMPILE_TEST
+diff --git a/drivers/thermal/Makefile b/drivers/thermal/Makefile
+index c92eb22..88887ef 100644
+--- a/drivers/thermal/Makefile
++++ b/drivers/thermal/Makefile
+@@ -50,6 +50,7 @@ obj-$(CONFIG_INT340X_THERMAL)  += int340x_thermal/
+ obj-$(CONFIG_INTEL_BXT_PMIC_THERMAL) += intel_bxt_pmic_thermal.o
+ obj-$(CONFIG_INTEL_PCH_THERMAL)	+= intel_pch_thermal.o
+ obj-$(CONFIG_ST_THERMAL)	+= st/
++obj-$(CONFIG_SUN8I_THS)		+= sun8i_ths.o
+ obj-$(CONFIG_QCOM_TSENS)	+= qcom/
+ obj-$(CONFIG_TEGRA_SOCTHERM)	+= tegra/
+ obj-$(CONFIG_HISI_THERMAL)     += hisi_thermal.o
+diff --git a/include/linux/mfd/axp20x.h b/include/linux/mfd/axp20x.h
+index fec597f..90296f0 100644
+--- a/include/linux/mfd/axp20x.h
++++ b/include/linux/mfd/axp20x.h
+@@ -20,8 +20,10 @@ enum {
+ 	AXP221_ID,
+ 	AXP223_ID,
+ 	AXP288_ID,
++	AXP803_ID,
+ 	AXP806_ID,
+ 	AXP809_ID,
++	AXP813_ID,
+ 	NR_AXP20X_VARIANTS,
+ };
+ 
+diff --git a/sound/soc/codecs/Kconfig b/sound/soc/codecs/Kconfig
+index c67667b..53385b1 100644
+--- a/sound/soc/codecs/Kconfig
++++ b/sound/soc/codecs/Kconfig
+@@ -131,6 +131,7 @@ config SND_SOC_ALL_CODECS
+ 	select SND_SOC_STA529 if I2C
+ 	select SND_SOC_STAC9766 if SND_SOC_AC97_BUS
+ 	select SND_SOC_STI_SAS
++	select SND_SOC_SUNXI_HDMI
+ 	select SND_SOC_TAS2552 if I2C
+ 	select SND_SOC_TAS5086 if I2C
+ 	select SND_SOC_TAS571X if I2C
+@@ -793,6 +794,14 @@ config SND_SOC_STAC9766
+ config SND_SOC_STI_SAS
+ 	tristate "codec Audio support for STI SAS codec"
+ 
++config SND_SOC_SUNXI_HDMI
++	tristate "Allwinner sunxi HDMI Support"
++	default m if DRM_SUNXI_DE2_HDMI=m
++	default y if DRM_SUNXI_DE2_HDMI=y
++	select SND_PCM_ELD
++	help
++	  Enable HDMI audio output
++
+ config SND_SOC_TAS2552
+ 	tristate "Texas Instruments TAS2552 Mono Audio amplifier"
+ 	depends on I2C
+diff --git a/sound/soc/codecs/Makefile b/sound/soc/codecs/Makefile
+index 958cd49..35804eb 100644
+--- a/sound/soc/codecs/Makefile
++++ b/sound/soc/codecs/Makefile
+@@ -139,6 +139,7 @@ snd-soc-sta350-objs := sta350.o
+ snd-soc-sta529-objs := sta529.o
+ snd-soc-stac9766-objs := stac9766.o
+ snd-soc-sti-sas-objs := sti-sas.o
++snd-soc-sunxi-hdmi-objs := sunxi-hdmi.o
+ snd-soc-tas5086-objs := tas5086.o
+ snd-soc-tas571x-objs := tas571x.o
+ snd-soc-tas5720-objs := tas5720.o
+@@ -359,6 +360,7 @@ obj-$(CONFIG_SND_SOC_STA350)   += snd-soc-sta350.o
+ obj-$(CONFIG_SND_SOC_STA529)   += snd-soc-sta529.o
+ obj-$(CONFIG_SND_SOC_STAC9766)	+= snd-soc-stac9766.o
+ obj-$(CONFIG_SND_SOC_STI_SAS)	+= snd-soc-sti-sas.o
++obj-$(CONFIG_SND_SOC_SUNXI_HDMI)	+= snd-soc-sunxi-hdmi.o
+ obj-$(CONFIG_SND_SOC_TAS2552)	+= snd-soc-tas2552.o
+ obj-$(CONFIG_SND_SOC_TAS5086)	+= snd-soc-tas5086.o
+ obj-$(CONFIG_SND_SOC_TAS571X)	+= snd-soc-tas571x.o
+diff --git a/sound/soc/sunxi/Kconfig b/sound/soc/sunxi/Kconfig
+index dd23682..d89b2da 100644
+--- a/sound/soc/sunxi/Kconfig
++++ b/sound/soc/sunxi/Kconfig
+@@ -26,4 +26,12 @@ config SND_SUN4I_SPDIF
+ 	help
+ 	  Say Y or M to add support for the S/PDIF audio block in the Allwinner
+ 	  A10 and affiliated SoCs.
++
++config SND_SUN8I_I2S
++	tristate "Allwinner sun8i I2S Support"
++	depends on OF
++	select SND_SOC_GENERIC_DMAENGINE_PCM
++	help
++	  Say Y or M if you want to add support for SoC audio on
++	  Allwinner sun8i boards.
+ endmenu
+diff --git a/sound/soc/sunxi/Makefile b/sound/soc/sunxi/Makefile
+index 604c7b84..bcb871b 100644
+--- a/sound/soc/sunxi/Makefile
++++ b/sound/soc/sunxi/Makefile
+@@ -1,3 +1,6 @@
+ obj-$(CONFIG_SND_SUN4I_CODEC) += sun4i-codec.o
+ obj-$(CONFIG_SND_SUN4I_I2S) += sun4i-i2s.o
+ obj-$(CONFIG_SND_SUN4I_SPDIF) += sun4i-spdif.o
++
++snd-soc-sun8i-i2s-objs := sun8i-i2s.o
++obj-$(CONFIG_SND_SUN8I_I2S) += snd-soc-sun8i-i2s.o
