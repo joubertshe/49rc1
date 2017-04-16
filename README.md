@@ -4,7 +4,7 @@ The patch files are already applied inside the source code. An example config fi
 
 * Source:
 
-[Jean-François Moine](http://moinejf.free.fr/)'s blog
+[Jean-François Moine](http://moinejf.free.fr/)'s blog (This guy deleted it)
 
 * Future work (already in progress):
 
